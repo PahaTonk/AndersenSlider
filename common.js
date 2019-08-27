@@ -1,7 +1,18 @@
+//начальные опции
 const QUANTITY_VISIBLE_IMAGE = 8;
 const COUNT_PERCENT_WIDTH = +Math.floor(100 / QUANTITY_VISIBLE_IMAGE);
 const MIN_WIDTH_IMAGE = 90;
+const IMG_GALLERY_MINSK_POSTFIX = '_thumbnail_retina';
+const CSS_CLASS_OPTION = {
+    'full-image' : 'js_gallery_full_image',
+    'loaded-full-image' : 'js_loaded_full_image',
+    'active-track-element' : 'js_active_wrapper',
+    'loaded-track-image' : 'js_loaded_image',
+    'default-wrapper-image' : ['gallery__wrapper', 'track_wrapper_image', 'js_wrapper_image'],
+    'default-track-image' : ['gallery__image', 'track_image', 'js_track_image'],
+}
 
+// элементы галереи
 const GALLERY_POPUP = document.querySelector('.js_popup_gallery');
 const GALLERY_TITLE = GALLERY_POPUP.querySelector('.js_gallery_title');
 const GALLERY_ACTIVE_ZONE = GALLERY_POPUP.querySelector('.js_active_zone');
@@ -10,13 +21,16 @@ const GALLERY_PAGINATION = GALLERY_POPUP.querySelector('.js_gallery_pagination')
 const GALLERY_PAGINATION_START = GALLERY_PAGINATION.querySelector('.js_start_number');
 const GALLERY_PAGINATION_END = GALLERY_PAGINATION.querySelector('.js_end_number');
 
-const IMG_GALLERY_MINSK_POSTFIX = '_thumbnail_retina';
-
+// изменяемые элементы галереи
 let galleryFullImage = GALLERY_POPUP.querySelector('.js_gallery_full_image');
 let galleryTrack = GALLERY_POPUP.querySelector('.js_gallery_track');
+
+// изменяемые данные (общие для всех галерей)
 let trackVisibleWidth = +GALLERY_ACTIVE_ZONE.offsetWidth;
-//времянка! при закрытии попапа не забыть прописать изменение на 0 и удалить обработчик clickButtonArrow (GALLERY_ACTIVE_ZONE)
+//ЗАМЕТКА! при закрытии попапа не забыть прописать изменение на 0 и удалить обработчик clickButtonArrow (GALLERY_ACTIVE_ZONE)
 let dataPosition = 0;
+let arrInteractiveDots = [];
+
 
 
 /**
@@ -32,8 +46,6 @@ class SliderLogic {
         this.indexOldImage = -1;
         this.coordTrackX = 0;
         this.translateX = 0;
-        this.compensation = 1;
-        this.activeTrigger = 'js_next_visible';
 
         this.clickTrackHandler = this.clickTrackHandler.bind(this);
         this.clickButtonArrow = this.clickButtonArrow.bind(this);
@@ -52,29 +64,16 @@ class SliderLogic {
             addedVisibleImage(true);
         }
 
-        const balance = this._countImage % this.quantityVisibleImage;
-
         this.imageMargin = (trackVisibleWidth - this.widthImage * this.quantityVisibleImage) / this.quantityVisibleImage;
-        this.trackWidth = (this.widthImage + this.imageMargin) * this._countImage;
+        this.trackWidth = (this.widthImage + this.imageMargin) * this._quantityAllImage;
         this.translateX = trackVisibleWidth - this.widthImage - this.imageMargin;
         
 
         if (recursion) return;
 
-        // Добавление стилей и классов-триггеров картинкам
-        [ ...this._cloneTrackElement.children ].forEach( (element, index) => {
-
+        // Добавление стилей оберткам картинок
+        [ ...this._cloneTrackElement.children ].forEach( (element) => {
             element.setAttribute('style', `width: ${this.widthImage}px; margin-right: ${this.imageMargin}px;`);
-            const numberImage = index + 1;
-
-            if ( numberImage === this.quantityVisibleImage ) {
-                element.classList.add('js_next_visible');
-                this._cloneTrackElement.children[index - balance].classList.add('js_prev_visible');
-
-            } else if ( numberImage % this.quantityVisibleImage === 0 ) {
-                this._cloneTrackElement.children[index - this.compensation].classList.add('js_next_visible');
-                this._cloneTrackElement.children[index - balance - this.compensation].classList.add('js_prev_visible');
-            }
         } );
     }
 
@@ -87,25 +86,15 @@ class SliderLogic {
         const img = new Image();
 
         img.src = src;
-        img.classList.add('js_gallery_full_image');
-
+        img.classList.add( CSS_CLASS_OPTION['full-image'] );
+        
         img.addEventListener('load', () => {
-            GALLERY_FULL_IMAGE_WRAPPER.classList.add('js_loaded_full_image');
+            GALLERY_FULL_IMAGE_WRAPPER.classList.add( CSS_CLASS_OPTION['loaded-full-image'] );
         });
 
         galleryFullImage = img;
 
         return img;
-    }
-    
-    /**
-     * @method removeActiveElements
-     * @description метод очистки активных css-классов
-     */
-    removeActiveElements (sel) {
-        const arrActiveElements = GALLERY_ACTIVE_ZONE.querySelectorAll(`.${sel}`);
-        
-        [ ...arrActiveElements ].forEach( (element) => element.classList.remove(sel) )
     }
     
     /**
@@ -137,20 +126,13 @@ class SliderLogic {
 
         if (this.indexOldImage === dataPosition) return;
 
-        // проверка на класс-триггер
-        if (target.classList.contains(this.activeTrigger) && this.indexOldImage < dataPosition) {
-            this.scrollVisibleImages(-this.translateX);
-        } else if (target.classList.contains(this.activeTrigger)) {
-            this.scrollVisibleImages(this.translateX);
-        }
-
         this.indexOldImage = dataPosition;
-
-        this.removeActiveElements('js_active_wrapper');
-        this.removeActiveElements('js_loaded_full_image');
+        
+        this.removeCSSClassSelectedElements( CSS_CLASS_OPTION['active-track-element'] );
+        this.removeCSSClassSelectedElements( CSS_CLASS_OPTION['loaded-full-image'] );
         this.changeCurrentNumberPagination(dataPosition);
         
-        target.classList.add('js_active_wrapper');
+        target.classList.add( CSS_CLASS_OPTION['active-track-element'] );
 
         if (galleryFullImage) {
             galleryFullImage.setAttribute('src', src);
@@ -167,13 +149,13 @@ class SliderLogic {
     clickButtonArrow (e) {
         if (e.target.classList.contains('js_left')) {
             if (--dataPosition < 0) {
-                dataPosition = this._countImage - 1;
+                dataPosition = this._quantityAllImage - 1;
             }
             
             this.activateSelectedImage(dataPosition);
 
         } else if (e.target.classList.contains('js_right')) {
-            if (++dataPosition > this._countImage - 1) {
+            if (++dataPosition > this._quantityAllImage - 1) {
                 dataPosition = 0;
             }
             
@@ -181,6 +163,33 @@ class SliderLogic {
         }
     }
 
+    /**
+     * 
+     */
+    createInteractiveDots () {
+        if (this.quantityVisibleImage === 1 || this.quantityVisibleImage === 2 || this.quantityVisibleImage <= this._quantityAllImage) return;
+
+        let index = this.quantityVisibleImage;
+
+        arrInteractiveDots.push(index);
+        index -= 2;
+
+        while (index <= this._quantityAllImage) {
+            index += this.quantityVisibleImage;
+
+            arrInteractiveDots.push(index);
+        }
+        // Дописать
+        // const arrInteractiveElem = [ ...this._cloneTrackElement.children ].filter( elem => {
+        //     const num = +elem.getAttribute('data-number') + 1;
+
+
+        // });
+        for (let i = arrInteractiveDots.length; --i > -1; ) {
+
+        }
+    }
+    
     /**
      * @method addEndNumberPagination
      * @param {number} number
@@ -206,6 +215,16 @@ class SliderLogic {
      */
     activateSelectedImage (number) {
         this._cloneTrackElement.children[number].click();
+    }
+    
+    /**
+     * @method removeCSSClassSelectedElements
+     * @description метод очистки выбранных css-классов
+     */
+    removeCSSClassSelectedElements (sel) {
+        const arrActiveElements = GALLERY_ACTIVE_ZONE.querySelectorAll(`.${sel}`);
+        
+        [ ...arrActiveElements ].forEach( (element) => element.classList.remove(sel) )
     }
 }
 
@@ -241,7 +260,7 @@ class ImageDOMElement {
         image.src = this.src;
         image.classList.add( ...this.classListImage );
         image.addEventListener('load', () => {
-            wrapper.classList.add('js_loaded_image');
+            wrapper.classList.add( CSS_CLASS_OPTION['loaded-track-image'] );
         });
 
         wrapper.classList.add( ...this.classListWrapper );
@@ -275,7 +294,7 @@ class TrackSlider extends SliderLogic {
         this._cloneTrackElement = galleryTrack.cloneNode();
         this._arrGalleryImg = [];
         this._arrTrackImg = [];
-        this._countImage = 0;
+        this._quantityAllImage = 0;
     }
 
     /**
@@ -312,10 +331,8 @@ class TrackSlider extends SliderLogic {
     createTemplateImage () {
         const nodesArr = [];
 
-        for (let i = 0; i < this._countImage; i++) {
-            const CSSClassListWrapper = ['gallery__wrapper', 'track_wrapper_image', 'js_wrapper_image'];
-            const CSSClassImage = ['gallery__image', 'track_image', 'js_track_image'];
-            const classImage = new ImageDOMElement(this._arrTrackImg[i], CSSClassListWrapper, CSSClassImage, i );
+        for (let i = 0; i < this._quantityAllImage; i++) {
+            const classImage = new ImageDOMElement(this._arrTrackImg[i], CSS_CLASS_OPTION['default-wrapper-image'], CSS_CLASS_OPTION['default-track-image'], i );
 
             nodesArr.push( classImage.createNodes() );
         }
@@ -332,7 +349,7 @@ class TrackSlider extends SliderLogic {
         return this.addSrcArr()
             .then( data => { 
                 this._arrGalleryImg = data[this.location].gallery;
-                this._countImage = this._arrGalleryImg.length;
+                this._quantityAllImage = this._arrGalleryImg.length;
         
                 this._addImageTracking();
 
@@ -341,7 +358,7 @@ class TrackSlider extends SliderLogic {
             .then( data => {
                 const arr = this.createTemplateImage();
 
-                for (let i = 0; i < this._countImage; i++) {
+                for (let i = 0; i < this._quantityAllImage; i++) {
                     this._cloneTrackElement.appendChild( arr[i] ) ;
                 }
 
@@ -392,7 +409,7 @@ class Slider extends TrackSlider {
                 this.addedVisibleImage();
                 this.appendTrackNodes();
                 this.activateSelectedImage(dataPosition);
-                this.addEndNumberPagination(this._countImage);
+                this.addEndNumberPagination(this._quantityImage);
 
                 return data;
             })
