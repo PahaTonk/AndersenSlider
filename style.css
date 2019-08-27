@@ -1,0 +1,110 @@
+* {
+    box-sizing: border-box;
+}
+@keyframes lds-ring {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+.lds-ring {
+    position: relative;
+    display: block;
+    width: 64px;
+    height: 64px;
+    margin: auto;
+    text-align: center;
+}
+.lds-ring div {
+    position: absolute;
+    display: block;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    width: 51px;
+    height: 51px;
+    margin: 6px;
+    -webkit-animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+    animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+    border: 6px solid #feda00;
+    border-color: #feda00 transparent transparent transparent;
+    border-radius: 50%;
+}
+.lds-ring div:nth-child(1) {
+    -webkit-animation-delay: -.45s;
+    animation-delay: -.45s;
+}
+.lds-ring div:nth-child(2) {
+    -webkit-animation-delay: -.3s;
+    animation-delay: -.3s;
+}
+.lds-ring div:nth-child(3) {
+    -webkit-animation-delay: -.15s;
+    animation-delay: -.15s;
+}
+.js_active_zone {
+    width: 960px;
+    overflow-x: hidden;
+}
+.js_gallery_track {
+    display: flex;
+}
+.js_gallery_full_image_wrapper .js_gallery_full_image,
+.js_wrapper_image .js_track_image,
+.js_loaded_full_image .lds-ring,
+.js_loaded_image .lds-ring {
+    display: none;
+}
+.js_gallery_full_image_wrapper {
+    height: 500px;
+}
+.js_gallery_full_image_wrapper,
+.js_wrapper_image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.js_wrapper_image {
+    border: 3px solid transparent;
+}
+.js_active_wrapper {
+    border-color: red;
+}
+.js_loaded_full_image .js_gallery_full_image {
+    height: 100%;
+}
+.js_loaded_full_image .js_gallery_full_image,
+.js_wrapper_image .js_track_image {
+    max-height: 100%;
+    width: auto;
+    max-width: 100%;
+}
+.js_gallery_full_image_wrapper .js_arrow {
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    height: 100%;
+    position: relative;
+}
+.js_arrow::after {
+    -webkit-transition: border-color 0.3s ease;
+    transition: border-color 0.3s ease;
+    content: '';
+    display: inline-block;
+    border: solid #c8cad3;
+    border-width: 0 1px 1px 0;
+    padding: 8px;
+    -webkit-transform: rotate(-45deg);
+    transform: rotate(-45deg);
+}
+.js_arrow.js_left::after {
+    -webkit-transform: rotate(135deg);
+    transform: rotate(135deg);
+}
+.js_loaded_full_image .js_gallery_full_image,
+.js_loaded_image .js_track_image {
+    display: block;
+}

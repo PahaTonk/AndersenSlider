@@ -5,29 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Document</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <style>
-        .js_active_zone {
-            width: 960px;
-            overflow-x: hidden;
-        }
-        .js_gallery_track {
-            display: flex;
-        }
-        .js_loaded_image .lds-ring {
-            display: none;
-        }
-        .js_wrapper_image {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-        .js_wrapper_image .js_track_image {
-            width: 100%;
-        }
-    </style>
 <div class="popup popup-gallery js_popup_gallery">
     <div class="popup__container popup__container_gallery">
         <div class="popup__content">
@@ -38,9 +18,11 @@
                     <div class="gallery__main js_gallery_full_image_wrapper"></div>
                     <div class="gallery__secondary js_gallery_track"></div>
                     <div class="gallery__amount-row js_gallery_pagination">
-                        <span class="gallery__amount-current">1</span>/
-                        <span class="gallery__amount-total">41</span>
+                        <span class="gallery__amount-current js_start_number">1</span>/
+                        <span class="gallery__amount-total js_end_number"></span>
                     </div>
+                    <button type="button" class="js_left js_arrow"></button>
+                    <button type="button" class="js_right js_arrow"></button>
                 </div>
             </div>
         </div>
