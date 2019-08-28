@@ -250,9 +250,9 @@ class SliderLogic {
             index += this.quantityVisibleImage;
 
             if (index > this._quantityAllImage) {
-                const indexLastElement = this._order ? arrInteractiveDots[arrInteractiveDots.length - 1] - 1 : 0;
+                const indexLastElement = this._order ? arrInteractiveDots[arrInteractiveDots.length - 1] : arrInteractiveDots[0];
 
-                this._cloneTrackElement.children[indexLastElement].classList.add( CSS_CLASS_OPTION['last-interactive-dot'] );
+                this._cloneTrackElement.children[indexLastElement - 1].classList.add( CSS_CLASS_OPTION['last-interactive-dot'] );
                 break;
             }
 
