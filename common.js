@@ -10,6 +10,8 @@ const CSS_CLASS_OPTION = {
     'loaded-track-image' : 'js_loaded_image',
     'default-wrapper-image' : ['gallery__wrapper', 'track_wrapper_image', 'js_wrapper_image'],
     'default-track-image' : ['gallery__image', 'track_image', 'js_track_image'],
+    'interactive-dot' : 'js_next_track',
+    'last-interactive-dot' : 'js_end_track',
 }
 
 // элементы галереи
@@ -20,6 +22,7 @@ const GALLERY_FULL_IMAGE_WRAPPER = GALLERY_POPUP.querySelector('.js_gallery_full
 const GALLERY_PAGINATION = GALLERY_POPUP.querySelector('.js_gallery_pagination');
 const GALLERY_PAGINATION_START = GALLERY_PAGINATION.querySelector('.js_start_number');
 const GALLERY_PAGINATION_END = GALLERY_PAGINATION.querySelector('.js_end_number');
+const GALLERY_BUTTON_RIGHT = GALLERY_POPUP.querySelector('.js_right');
 
 // изменяемые элементы галереи
 let galleryFullImage = GALLERY_POPUP.querySelector('.js_gallery_full_image');
@@ -40,15 +43,24 @@ let arrInteractiveDots = [];
 class SliderLogic {
     constructor () {
         this.quantityVisibleImage = QUANTITY_VISIBLE_IMAGE;
-        this.widthImage = 100;
-        this.imageMargin = 0;
-        this.trackWidth = 500;
-        this.indexOldImage = -1;
-        this.coordTrackX = 0;
-        this.translateX = 0;
+        this._widthImage = 100;
+        this._imageMargin = 0;
+        this._trackWidth = 500;
+        this._indexOldImage = -1;
+        this._coordTrackX = 0;
+        this._translateX = 0;
+        this._quantityImageRetention = 0;
+        this._order = true;
 
-        this.clickTrackHandler = this.clickTrackHandler.bind(this);
-        this.clickButtonArrow = this.clickButtonArrow.bind(this);
+        this._clickTrackHandler = this.clickTrackHandler.bind(this);
+        this._clickButtonArrow = this.clickButtonArrow.bind(this);
+        this._clickFullImageHandler = this.clickFullImageHandler.bind(this);
+    }
+
+    updateOption(numberPosition = 0) {
+        dataPosition = numberPosition;
+        GALLERY_ACTIVE_ZONE.removeEventListener('click', this._clickButtonArrow);
+        GALLERY_FULL_IMAGE_WRAPPER.removeEventListener('click', this._clickFullImageHandler);
     }
     
     /**
@@ -57,23 +69,22 @@ class SliderLogic {
      * и общей ширины дорожки
      */
     addedVisibleImage (recursion) {
-        this.widthImage = +Math.floor(trackVisibleWidth * COUNT_PERCENT_WIDTH / 100);
+        this._widthImage = +Math.floor(trackVisibleWidth * COUNT_PERCENT_WIDTH / 100);
         
-        if (this.widthImage < MIN_WIDTH_IMAGE) {
+        if (this._widthImage < MIN_WIDTH_IMAGE) {
             --this.quantityVisibleImage;
-            addedVisibleImage(true);
+            this.addedVisibleImage(true);
         }
-
-        this.imageMargin = (trackVisibleWidth - this.widthImage * this.quantityVisibleImage) / this.quantityVisibleImage;
-        this.trackWidth = (this.widthImage + this.imageMargin) * this._quantityAllImage;
-        this.translateX = trackVisibleWidth - this.widthImage - this.imageMargin;
         
-
+        this._imageMargin = (trackVisibleWidth - this._widthImage * this.quantityVisibleImage) / this.quantityVisibleImage;
+        this._trackWidth = (this._widthImage + this._imageMargin) * this._quantityAllImage;
+        this._translateX = trackVisibleWidth - this._widthImage - this._imageMargin;
+        
         if (recursion) return;
 
         // Добавление стилей оберткам картинок
         [ ...this._cloneTrackElement.children ].forEach( (element) => {
-            element.setAttribute('style', `width: ${this.widthImage}px; margin-right: ${this.imageMargin}px;`);
+            element.setAttribute('style', `width: ${this._widthImage}px; margin-right: ${this._imageMargin}px;`);
         } );
     }
 
@@ -98,17 +109,30 @@ class SliderLogic {
     }
     
     /**
-     * 
+     * @method scrollVisibleImages
+     * @param {number} translate сдвиг дорожки по оси Х
+     * @description управление скроллингом дорожки
      */
     scrollVisibleImages (translate) {
-        this.coordTrackX += translate;
 
-        if (this.coordTrackX < 0) {
-            this._cloneTrackElement.setAttribute('style', `transform: translateX(${this.coordTrackX}px);`);
+        this._coordTrackX += translate;
+
+        if (this._coordTrackX < 0) {
+            this._cloneTrackElement.setAttribute('style', `transform: translateX(${this._coordTrackX}px);`);
         } else {
-            this.coordTrackX = 0;
-            this._cloneTrackElement.setAttribute('style', `transform: translateX(${this.coordTrackX}px);`);
+            this._coordTrackX = 0;
+            this._cloneTrackElement.setAttribute('style', `transform: translateX(${this._coordTrackX}px);`);
         }
+    }
+
+    /**
+     * @method clickFullImageHandler
+     * @description обработчик клика по большой картинке
+     */
+    clickFullImageHandler (e) {
+        if (!e.target.classList.contains('js_gallery_full_image')) return;
+
+        GALLERY_BUTTON_RIGHT.click();
     }
 
     /**
@@ -124,9 +148,7 @@ class SliderLogic {
         dataPosition = +target.getAttribute('data-number');
         const src = this._arrGalleryImg[dataPosition];
 
-        if (this.indexOldImage === dataPosition) return;
-
-        this.indexOldImage = dataPosition;
+        if (this._indexOldImage === dataPosition) return;
         
         this.removeCSSClassSelectedElements( CSS_CLASS_OPTION['active-track-element'] );
         this.removeCSSClassSelectedElements( CSS_CLASS_OPTION['loaded-full-image'] );
@@ -140,6 +162,30 @@ class SliderLogic {
             GALLERY_FULL_IMAGE_WRAPPER.innerHTML += utils.createSpinner();
             GALLERY_FULL_IMAGE_WRAPPER.appendChild( this.createFullImage(src) );
         }
+
+        // работа с перелистыванием дорожек
+        if (target.classList.contains( CSS_CLASS_OPTION['last-interactive-dot'] )) {
+            const retentionWidth = this._quantityImageRetention * (this._widthImage + this._imageMargin);
+            
+            this.checkOrderTrack();
+
+            if (dataPosition > this._indexOldImage) {
+                this.scrollVisibleImages(-retentionWidth);
+            } else {
+                this.scrollVisibleImages(retentionWidth);
+            }
+            
+        } else if (target.classList.contains( CSS_CLASS_OPTION['interactive-dot'] )) {
+
+            if (dataPosition > this._indexOldImage) {
+                this.scrollVisibleImages(-this._translateX);
+            } else {
+                this.scrollVisibleImages(this._translateX);
+            }
+
+        }
+
+        this._indexOldImage = dataPosition;
     }
 
     /**
@@ -148,15 +194,30 @@ class SliderLogic {
      */
     clickButtonArrow (e) {
         if (e.target.classList.contains('js_left')) {
+            if (this._order && this._cloneTrackElement.children[dataPosition].classList.contains( CSS_CLASS_OPTION['interactive-dot'] )) {
+                this.scrollVisibleImages(this._translateX);
+            }
+
             if (--dataPosition < 0) {
                 dataPosition = this._quantityAllImage - 1;
+                const translateX = (this._quantityAllImage - this.quantityVisibleImage) * (this._widthImage + this._imageMargin);
+
+                this.scrollVisibleImages(-translateX);
+                this.checkOrderTrack();
             }
             
             this.activateSelectedImage(dataPosition);
 
         } else if (e.target.classList.contains('js_right')) {
+            if (!this._order && this._cloneTrackElement.children[dataPosition].classList.contains( CSS_CLASS_OPTION['interactive-dot'] )) {
+                this.scrollVisibleImages(-this._translateX);
+            }
+
             if (++dataPosition > this._quantityAllImage - 1) {
                 dataPosition = 0;
+                
+                this.scrollVisibleImages(Math.abs(this._coordTrackX));
+                this.checkOrderTrack();
             }
             
             this.activateSelectedImage(dataPosition);
@@ -164,32 +225,71 @@ class SliderLogic {
     }
 
     /**
-     * 
+     * @method createInteractiveDots
+     * @param {number} index начальное значение отсчета интерактивных точек
+     * @description Подсчитывает количество интерактивных точек и расставляет соответствующие css-классы
+     * на дороке
      */
-    createInteractiveDots () {
-        if (this.quantityVisibleImage === 1 || this.quantityVisibleImage === 2 || this.quantityVisibleImage <= this._quantityAllImage) return;
+    createInteractiveDots (index = this.quantityVisibleImage) {
+        if (this.quantityVisibleImage === 1 || this.quantityVisibleImage === 2 || this.quantityVisibleImage === this._quantityAllImage) return;
 
-        let index = this.quantityVisibleImage;
+        arrInteractiveDots = [];
+        const arrOldInteractiveDots = this._cloneTrackElement.querySelectorAll( CSS_CLASS_OPTION['interactive-dot'] );
+        
+        if (arrOldInteractiveDots) {
+            this.removeCSSClassSelectedElements( CSS_CLASS_OPTION['interactive-dot'] );
+            this.removeCSSClassSelectedElements( CSS_CLASS_OPTION['last-interactive-dot'] );
+        }
 
         arrInteractiveDots.push(index);
-        index -= 2;
+        --index;
 
         while (index <= this._quantityAllImage) {
             index += this.quantityVisibleImage;
 
+            if (index > this._quantityAllImage) {
+                const indexLastElement = this._order ? arrInteractiveDots[arrInteractiveDots.length - 1] - 1 : 0;
+
+                this._cloneTrackElement.children[indexLastElement].classList.add( CSS_CLASS_OPTION['last-interactive-dot'] );
+                break;
+            }
+
             arrInteractiveDots.push(index);
         }
-        // Дописать
-        // const arrInteractiveElem = [ ...this._cloneTrackElement.children ].filter( elem => {
-        //     const num = +elem.getAttribute('data-number') + 1;
 
-
-        // });
+        // присваивание интерактивных классов
         for (let i = arrInteractiveDots.length; --i > -1; ) {
+            const index = arrInteractiveDots[i] - 1;
+
+            this._cloneTrackElement.children[index].classList.add( CSS_CLASS_OPTION['interactive-dot'] );
 
         }
+
     }
-    
+
+    /**
+     * @method checkOrderTrack
+     * @description наблюдает за направлением дорожки
+     */
+    checkOrderTrack () {
+        this._order = !this._order;
+
+        if (this._order) {
+            this.createInteractiveDots(this.quantityVisibleImage);
+        } else {
+            this.createInteractiveDots(this._quantityImageRetention + 1);
+        }
+    }
+
+    /**
+     * @method countRetentionImage
+     * @description подсчитывает остаток картинок в конце
+     */
+    countRetentionImage() {
+        const index = arrInteractiveDots.length - 1;
+        this._quantityImageRetention = this._quantityAllImage - arrInteractiveDots[index];
+    }
+
     /**
      * @method addEndNumberPagination
      * @param {number} number
@@ -347,24 +447,24 @@ class TrackSlider extends SliderLogic {
      */
     loadedImage () {
         return this.addSrcArr()
-            .then( data => { 
-                this._arrGalleryImg = data[this.location].gallery;
-                this._quantityAllImage = this._arrGalleryImg.length;
-        
-                this._addImageTracking();
+                .then( data => { 
+                    this._arrGalleryImg = data[this.location].gallery;
+                    this._quantityAllImage = this._arrGalleryImg.length;
+            
+                    this._addImageTracking();
 
-                return data;
-            })
-            .then( data => {
-                const arr = this.createTemplateImage();
+                    return data;
+                })
+                .then( data => {
+                    const arr = this.createTemplateImage();
 
-                for (let i = 0; i < this._quantityAllImage; i++) {
-                    this._cloneTrackElement.appendChild( arr[i] ) ;
-                }
+                    for (let i = 0; i < this._quantityAllImage; i++) {
+                        this._cloneTrackElement.appendChild( arr[i] ) ;
+                    }
 
-                return data;
-            })
-            .catch( (err) => console.error(err) );
+                    return data;
+                })
+                .catch( (err) => console.error(err) );
     }
     
     /**
@@ -397,11 +497,13 @@ class Slider extends TrackSlider {
      * @description сборка слайдера
      */
     projectAssembly () {
-        this.loadedImage()
+        return this.loadedImage()
             .then( (data) => {
                 // обработчик клика по картинке на дорожке
-                this._cloneTrackElement.addEventListener('click', this.clickTrackHandler);
-                GALLERY_ACTIVE_ZONE.addEventListener('click', this.clickButtonArrow);
+                this._cloneTrackElement.addEventListener('click', this._clickTrackHandler);
+                GALLERY_ACTIVE_ZONE.addEventListener('click', this._clickButtonArrow);
+                GALLERY_FULL_IMAGE_WRAPPER.addEventListener('click', this._clickFullImageHandler);
+                
 
                 return data;
             })
@@ -409,7 +511,9 @@ class Slider extends TrackSlider {
                 this.addedVisibleImage();
                 this.appendTrackNodes();
                 this.activateSelectedImage(dataPosition);
-                this.addEndNumberPagination(this._quantityImage);
+                this.createInteractiveDots();
+                this.countRetentionImage();
+                this.addEndNumberPagination(this._quantityAllImage);
 
                 return data;
             })
@@ -418,4 +522,4 @@ class Slider extends TrackSlider {
 
 // времянка
 let minsk = new Slider('minsk', '_thumbnail_retina');
-minsk.projectAssembly();
+minsk.projectAssembly()

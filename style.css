@@ -50,6 +50,7 @@
 }
 .js_gallery_track {
     display: flex;
+    transition: 500ms;
 }
 .js_gallery_full_image_wrapper .js_gallery_full_image,
 .js_wrapper_image .js_track_image,
