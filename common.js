@@ -12,6 +12,8 @@ const CSS_CLASS_OPTION = {
     'default-track-image' : ['gallery__image', 'track_image', 'js_track_image'],
     'interactive-dot' : 'js_next_track',
     'last-interactive-dot' : 'js_end_track',
+    'button-arrow-right' : 'js_right',
+    'button-arrow-left' : 'js_left',
 }
 
 // элементы галереи
@@ -22,10 +24,10 @@ const GALLERY_FULL_IMAGE_WRAPPER = GALLERY_POPUP.querySelector('.js_gallery_full
 const GALLERY_PAGINATION = GALLERY_POPUP.querySelector('.js_gallery_pagination');
 const GALLERY_PAGINATION_START = GALLERY_PAGINATION.querySelector('.js_start_number');
 const GALLERY_PAGINATION_END = GALLERY_PAGINATION.querySelector('.js_end_number');
-const GALLERY_BUTTON_RIGHT = GALLERY_POPUP.querySelector('.js_right');
+const GALLERY_BUTTON_RIGHT = GALLERY_POPUP.querySelector( CSS_CLASS_OPTION['button-arrow-right'] );
 
 // изменяемые элементы галереи
-let galleryFullImage = GALLERY_POPUP.querySelector('.js_gallery_full_image');
+let galleryFullImage = GALLERY_POPUP.querySelector( CSS_CLASS_OPTION['full-image'] );
 let galleryTrack = GALLERY_POPUP.querySelector('.js_gallery_track');
 
 // изменяемые данные (общие для всех галерей)
@@ -130,7 +132,7 @@ class SliderLogic {
      * @description обработчик клика по большой картинке
      */
     clickFullImageHandler (e) {
-        if (!e.target.classList.contains('js_gallery_full_image')) return;
+        if (!e.target.classList.contains( CSS_CLASS_OPTION['full-image'] )) return;
 
         GALLERY_BUTTON_RIGHT.click();
     }
@@ -193,7 +195,7 @@ class SliderLogic {
      * @description Управление нажатими на кнопки вправо/влево
      */
     clickButtonArrow (e) {
-        if (e.target.classList.contains('js_left')) {
+        if ( e.target.classList.contains( CSS_CLASS_OPTION['button-arrow-left'])  ) {
             if (this._order && this._cloneTrackElement.children[dataPosition].classList.contains( CSS_CLASS_OPTION['interactive-dot'] )) {
                 this.scrollVisibleImages(this._translateX);
             }
@@ -208,7 +210,7 @@ class SliderLogic {
             
             this.activateSelectedImage(dataPosition);
 
-        } else if (e.target.classList.contains('js_right')) {
+        } else if (e.target.classList.contains( CSS_CLASS_OPTION['button-arrow-right']) ) {
             if (!this._order && this._cloneTrackElement.children[dataPosition].classList.contains( CSS_CLASS_OPTION['interactive-dot'] )) {
                 this.scrollVisibleImages(-this._translateX);
             }
