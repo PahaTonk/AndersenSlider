@@ -8,26 +8,22 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="popup popup-gallery js_popup_gallery">
-    <div class="popup__container popup__container_gallery">
-        <div class="popup__content">
+<section id="{{$id}}" class="popup-gallery js_popup_gallery">
+        <div class="popup__container popup__container_gallery">
             <span class="popup__close js_popup_close"></span>
-            <div class="popup__section gallery">
-                <h2 class=" gallery__title js_gallery_title">Our office in Minsk</h2>
-                <div class="gallery__sliders js_active_zone" style="margin-top: 12px;">
-                    <div class="gallery__main js_gallery_full_image_wrapper"></div>
-                    <div class="gallery__secondary js_gallery_track"></div>
-                    <div class="gallery__amount-row js_gallery_pagination">
-                        <span class="gallery__amount-current js_start_number">1</span>/
-                        <span class="gallery__amount-total js_end_number"></span>
-                    </div>
-                    <button type="button" class="js_left js_arrow"></button>
-                    <button type="button" class="js_right js_arrow"></button>
+            <div class="popup__section js_active_zone">
+                <h2 class=" gallery__title js_gallery_title"></h2>
+                <div class="gallery__main js_gallery_full_image_wrapper"></div>
+                <div class="gallery__secondary js_gallery_track"></div>
+                <div class="gallery__amount-row js_gallery_pagination">
+                    <span class="gallery__amount-current js_start_number">1</span>/
+                    <span class="gallery__amount-total js_end_number"></span>
                 </div>
+                <button type="button" class="js_left js_arrow"></button>
+                <button type="button" class="js_right js_arrow"></button>
             </div>
         </div>
-    </div>
-</div>
+    </section>
     
     <script src="offices.js"></script>
     <script src="utils.js"></script>

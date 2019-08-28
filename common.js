@@ -8,7 +8,7 @@ const CSS_CLASS_OPTION = {
     'loaded-full-image' : 'js_loaded_full_image',
     'active-track-element' : 'js_active_wrapper',
     'loaded-track-image' : 'js_loaded_image',
-    'default-wrapper-image' : ['gallery__wrapper', 'track_wrapper_image', 'js_wrapper_image'],
+    'default-wrapper-image' : ['gallery__secondary-slide', 'gallery__wrapper', 'track_wrapper_image', 'js_wrapper_image'],
     'default-track-image' : ['gallery__image', 'track_image', 'js_track_image'],
     'interactive-dot' : 'js_next_track',
     'last-interactive-dot' : 'js_end_track',

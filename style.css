@@ -45,7 +45,6 @@
     animation-delay: -.15s;
 }
 .js_active_zone {
-    width: 960px;
     overflow-x: hidden;
 }
 .js_gallery_track {
